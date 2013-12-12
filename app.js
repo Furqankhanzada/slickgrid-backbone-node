@@ -80,6 +80,42 @@ app.get('/api/products', function (req, res) {
     });
 });
 
+// POST to CREATE
+app.post('/api/products', function (req, res) {
+    var todo;
+    var product = new Product({
+        name : req.body.name,
+        grapes : req.body.grapes,
+        country : req.body.country,
+        region : req.body.region,
+        year : req.body.year,
+        notes : req.body.notes
+    });
+    product.save('save', function (err, next) {
+        if (!err) {
+            return console.log("created");
+        } else {
+            return console.log(err);
+        }
+        next();
+    });
+    return res.send(product);
+});
+
+// remove a single product
+app.delete('/api/products/:id', function (req, res) {
+    return Product.findById(req.params.id, function (err, product) {
+        return product.remove(function (err) {
+            if (!err) {
+                console.log("removed");
+                return res.send(req.params.id);
+            } else {
+                console.log(err);
+            }
+        });
+    });
+});
+
 http.createServer(app).listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));
 });
