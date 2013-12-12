@@ -5,7 +5,6 @@
 
 var express = require('express');
 var routes = require('./routes');
-var user = require('./routes/user');
 var http = require('http');
 var path = require('path');
 var mongoose = require('mongoose');
@@ -19,25 +18,39 @@ mongoose.connection.on('open', function() {
     console.log('Connected to Mongoose');
 });
 
-/*var Schema = mongoose.Schema
+var Schema = mongoose.Schema
 
-var Todo = new Schema({
-    name : {type: String, required: true, trim: true},
-    status : {type: String, trim: true}
+var SlickGridList = new Schema({
+    title : {type: String, required: true, trim: true},
+    duration : {type: String, trim: true},
+    complete : {type: Number, trim: true},
+    start : {type: Date},
+    finish : {type: Date },
+    effort_driven : {type: Boolean }
 });
-var TodoModel = mongoose.model('Todo', Todo);*/
+var List = mongoose.model('List', SlickGridList);
 
-/*var tm = new TodoModel({name:'farhan',status:true});
- tm.save(function(err,data){
- if(err){
- console.log("Its error")
- }
- else
- {
- console.log("data saved");
- console.log(data);
- }
- })*/
+/*
+var list = new List({
+    title : 'Task 10',
+    duration : '19 Days',
+    complete : 79,
+    start : '02/02/2009',
+    finish : '02/08/2009',
+    effort_driven : false
+});
+
+list.save(function(err,data){
+     if(err){
+        console.log("Its error")
+     }
+     else
+     {
+        console.log("data saved");
+        console.log(data);
+     }
+ });
+*/
 
 
 // all environments
@@ -57,7 +70,17 @@ if ('development' == app.get('env')) {
 }
 
 app.get('/', routes.index);
-app.get('/users', user.list);
+
+// Get Lists
+app.get('/api/lists', function (req, res) {
+    return List.find(function (err, lists) {
+        if (!err) {
+            return res.send(lists);
+        } else {
+            return console.log(err);
+        }
+    });
+});
 
 http.createServer(app).listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));
