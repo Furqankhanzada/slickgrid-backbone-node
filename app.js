@@ -20,27 +20,26 @@ mongoose.connection.on('open', function() {
 
 var Schema = mongoose.Schema
 
-var SlickGridList = new Schema({
-    title : {type: String, required: true, trim: true},
-    duration : {type: String, trim: true},
-    complete : {type: Number, trim: true},
-    start : {type: Date},
-    finish : {type: Date },
-    effort_driven : {type: Boolean }
+var Product = new Schema({
+    name : {type: String, trim: true},
+    grapes : {type: String, trim: true},
+    country : {type: String, trim: true},
+    region : {type: String, trim: true},
+    year : {type: String, trim: true},
+    notes : {type: String, trim: true}
 });
-var List = mongoose.model('List', SlickGridList);
+var Product = mongoose.model('Product', Product);
 
-/*
-var list = new List({
-    title : 'Task 10',
-    duration : '19 Days',
-    complete : 79,
-    start : '02/02/2009',
-    finish : '02/08/2009',
-    effort_driven : false
+/*var product = new Product({
+ name : 'Product Ten',
+ grapes : 'Grenache / Syrah',
+ country : 'France',
+ region : 'Sothern Rhone',
+ year : '2009',
+ notes : 'Products detials will goes here ....................'
 });
 
-list.save(function(err,data){
+ product.save(function(err,data){
      if(err){
         console.log("Its error")
      }
@@ -49,8 +48,7 @@ list.save(function(err,data){
         console.log("data saved");
         console.log(data);
      }
- });
-*/
+ });*/
 
 
 // all environments
@@ -72,10 +70,10 @@ if ('development' == app.get('env')) {
 app.get('/', routes.index);
 
 // Get Lists
-app.get('/api/lists', function (req, res) {
-    return List.find(function (err, lists) {
+app.get('/api/products', function (req, res) {
+    return Product.find(function (err, products) {
         if (!err) {
-            return res.send(lists);
+            return res.send(products);
         } else {
             return console.log(err);
         }
