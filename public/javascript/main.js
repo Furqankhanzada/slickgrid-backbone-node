@@ -7,9 +7,11 @@ var Lists = Backbone.Collection.extend({
 });
 
 var TableView = Backbone.View.extend({
-    template: _.template('<table class="ui sortable table segment"><thead><tr><th>Title</th><th>Duration</th><th>%Complete</th><th>Start</th><th>Finish</th><th>Effort Driven</th></tr></thead>' +
+    tagName: 'table',
+    className: 'ui sortable table segment',
+    template: _.template('<thead><tr><th>Title</th><th>Duration</th><th>%Complete</th><th>Start</th><th>Finish</th><th>Effort Driven</th></tr></thead>' +
         '<tbody></tbody>' +
-        '<tfoot><tr><th>&nbsp;</th><th></th><th></th><th></th><th></th><th></th></tr></tfoot></table>'),
+        '<tfoot><tr><th>&nbsp;</th><th></th><th></th><th></th><th></th><th></th></tr></tfoot>'),
     initialize: function(){
         var _self = this;
         this.collection = new Lists();
@@ -23,6 +25,7 @@ var TableView = Backbone.View.extend({
         _.each(this.collection.toJSON(), function(model){
             _self.addOne(model);
         });
+        this.$el.tablesort();
         return this;
     },
     addOne: function(model){
@@ -40,5 +43,7 @@ var TableViewRow = Backbone.View.extend({
     }
 });
 
-var tableView = new TableView();
-$('.wrapper').append(tableView.render().el);
+$(function(){
+    var tableView = new TableView();
+    $('.wrapper').append(tableView.render().el);
+});
