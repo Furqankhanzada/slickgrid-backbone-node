@@ -17,7 +17,7 @@ var MenuView = Backbone.View.extend({
     templateNew: _.template('<div class="ui fluid form new_product_segment segment"><div class="five fields"><div class="field"><input type="text" name="name" placeholder="Name"> </div> <div class="field"> <input type="text" name="grapes" placeholder="Grapes"></div><div class="field"> <input type="text" name="country" placeholder="Country"></div><div class="field"> <input type="text" name="region" placeholder="Region"></div><div class="field"> <input type="text" name="year" placeholder="Year"></div><div class="field" style="padding-left: 0; width: 99%;"> <textarea placeholder="Notes"></textarea></div></div><div class="ui blue submit save button">Save</div><div style="margin-left: 10px" class="ui blue cancel submit button">Cancel</div></div>'),
     render: function(){
         var _self = this;
-        //this.$el.html(this.template());
+        this.$el.html(this.template());
         return this;
     },
     events: {
@@ -27,7 +27,7 @@ var MenuView = Backbone.View.extend({
     addNew: function(){
         var _self = this;
         if(!this.$el.next('.new_product_segment').length){
-            //this.$el.after(this.templateNew());
+            this.$el.after(this.templateNew());
             this.$el.next('.new_product_segment').find('.cancel').on('click', _self.cancel);
             this.$el.next('.new_product_segment').find('.save').on('click', _self.saveProduct);
         }
@@ -46,165 +46,137 @@ var MenuView = Backbone.View.extend({
             year : $newProductSegment.find('input[name="year"]').val(),
             notes : $newProductSegment.find('textarea').val()
         },{wait: true});
+        $newProductSegment.remove();
     }
 });
 
 var TableView = Backbone.View.extend({
-    tagName: 'div',
-    className: 'grid',
-    id: 'grid',
-    template: _.template('<thead><tr><th>Id</th><th>Name</th><th>Grapes</th><th>Country</th><th>Region</th><th>Year</th><th>Notes</th><th>Action</th></tr></thead>' +
-        '<tbody></tbody>' +
-        '<tfoot><tr><th>&nbsp;</th><th></th><th></th><th></th><th></th><th></th><th></th><th></th></tr></tfoot>'),
-    templateNew: _.template('<tr></tr><td class="disabled"><input type="text"></td><td><input type="text" name="name"></td><td><input type="text" name="grapes"></td><td><input type="text" name="country"></td><td><input type="text" name="region"></td><td><input type="text" name="year"></td><td><input type="text" name="notes"></td><td><div class="ui tiny buttons"><div class="ui teal button">Cancel</div><div class="or"></div><div class="ui negative button">Save</div></td>'),
-    templateEdit: _.template('<td class="disabled"><%= _id %></td><td><%= name %></td><td><%= grapes %></td><td><%= country %></td><td><%= region %></td><td><%= year %></td><td><%= notes %></td><td><div class="ui tiny buttons"><div class="ui teal button">Edit</div><div class="or"></div><div class="ui negative button">Delete</div></td>'),
     initialize: function(){
         var _self = this;
         this.collection = new Lists();
         this.collection.on('reset', this.render, this);
-        this.collection.on('add', this.render, this);
-        this.collection.on('remove', this.render, this);
+        this.collection.on('add', this.resetOnSave, this);
         this.collection.fetch({success: function(){
-            function DummyLinkFormatter(row, cell, value, columnDef, dataContext) {
-                return '<a href="#">' + value + '</a>';
-            }
-
-            var columnsSortable = [
-                {id: "id", name: "Id", field: "id", width: 350, sortable: true},
-                {id: "name", name: "Name", field: "name", width: 400, sortable: true, formatter: DummyLinkFormatter},
-                {id: "grapes", name: "Grapes", field: "grapes", width: 200, sortable: true},
-                {id: "country", name: "Country", field: "country", width: 200, sortable: true},
-                {id: "region", name: "Region", field: "region", width: 200, sortable: true},
-                {id: "year", name: "Year", field: "year", width: 150, sortable: true},
-                {id: "notes", name: "notes", field: "notes", width: 600, sortable: true}
-            ];
-
-            var dataFull = [];
-            _.each(_self.collection.toJSON(), function(model, i){
-                dataFull[i] = {
-                    id: model._id, // needed for DataView
-                    name: model.name,
-                    grapes: model.grapes,
-                    country: model.country,
-                    region: model.region,
-                    year: model.year,
-                    notes: model.notes
-                };
-            });
-
-
-            var columns;
-            var data;
-
-            // Example 4: Row selection
-            columns = columnsSortable.slice();
-            data = dataFull.slice();
-            console.log(dataFull)
-            $("#grid").slickgrid({
-                columns: columns,
-                data: data,
-                slickGridOptions: {
-                    enableCellNavigation: true,
-                    enableColumnReorder: true,
-                    forceFitColumns: true,
-                    rowHeight: 35
-                },
-                // handleCreate takes some extra options:
-                sortCol: undefined,
-                sortDir: true,
-                handleCreate: function () {
-                    var o = this.wrapperOptions;
-
-                    // checkbox column: add it
-                    var columns = o.columns.slice();
-                    var checkboxSelector = new Slick.CheckboxSelectColumn({});
-                    columns.unshift(checkboxSelector.getColumnDefinition());
-
-                    // configure grid with client-side data view
-                    var dataView = new Slick.Data.DataView();
-                    var grid = new Slick.Grid(this.element, dataView,
-                        columns, o.slickGridOptions);
-
-                    // selection model
-                    grid.setSelectionModel(new Slick.RowSelectionModel());
-                    grid.registerPlugin(checkboxSelector);
-
-                    // sorting
-                    var sortCol = o.sortCol;
-                    var sortDir = o.sortDir;
-                    function comparer(a, b) {
-                        var x = a[sortCol], y = b[sortCol];
-                        return (x == y ? 0 : (x > y ? 1 : -1));
-                    }
-                    grid.onSort.subscribe(function (e, args) {
-                        sortDir = args.sortAsc;
-                        sortCol = args.sortCol.field;
-                        dataView.sort(comparer, sortDir);
-                        grid.invalidateAllRows();
-                        grid.render();
-                    });
-
-                    // set the initial sorting to be shown in the header
-                    if (sortCol) {
-                        grid.setSortColumn(sortCol, sortDir);
-                    }
-
-                    // initialize the model after all the events have been hooked up
-                    dataView.beginUpdate();
-                    dataView.setItems(o.data);
-                    dataView.endUpdate();
-
-                    // if you don't want the items that are not visible (due to being filtered out
-                    // or being on a different page) to stay selected, pass 'false' to the second arg
-                    dataView.syncGridSelection(grid, true);
-
-                    grid.resizeCanvas(); // XXX Why is this needed? A possible bug?
-                    // If this is missing, the grid will have
-                    // a horizontal scrollbar, and the vertical
-                    // scrollbar cannot be moved. A column reorder
-                    // action fixes the situation.
-
-                }
-
-            });
-
+            _self.dataView.setItems(_self.resetData());
         },reset: true});
     },
     render: function(){
         var _self = this;
-        this.$el.html(this.template());
-        console.log(this.collection.toJSON());
-        _.each(this.collection.toJSON(), function(model){
-            _self.addOne(model);
+        var columns = _self.columnsSortable().slice();
+        var options = {
+            enableCellNavigation: true,
+            enableColumnReorder: true,
+            multiColumnSort: true,
+            forceFitColumns: true,
+            rowHeight: 35,
+            editable: true,
+            enableAddRow: true,
+            enableCellNavigation: true,
+            asyncEditorLoading: false,
+            autoEdit: false
+        };
+
+        _self.checkboxSelector = new Slick.CheckboxSelectColumn({
+            cssClass: "slick-cell-checkboxsel"
         });
-        return this;
+        columns.unshift(_self.checkboxSelector.getColumnDefinition());
+        // Create the DataView.
+        _self.dataView = new Slick.Data.DataView();
+        _self.grid = new Slick.Grid('#grid', _self.dataView, columns, options);
+        _self.grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: false}));
+        _self.grid.registerPlugin(_self.checkboxSelector);
+        // selection model
+        _self.grid.setSelectionModel(new Slick.RowSelectionModel());
+        _self.grid.registerPlugin(_self.checkboxSelector);
+
+        _self.dataView.onRowCountChanged.subscribe(function (e, args) {
+            _self.grid.updateRowCount();
+            _self.grid.render();
+            $('.delete').on('click', _self.deleteProduct);
+        });
+
+        //Updated code as per comment.
+        _self.grid.onCellChange.subscribe(function (e,args) {
+            console.log(args.item);
+            var Product = new List({
+                id: args.item.id, // needed for DataView
+                name: args.item.name,
+                grapes: args.item.grapes,
+                country: args.item.country,
+                region: args.item.region,
+                year: args.item.year,
+                notes: args.item.notes
+            });
+            Product.save();
+        });
+
+        _self.dataView.onRowsChanged.subscribe(function (e, args) {
+            _self.grid.invalidateRows(args.rows);
+            _self.grid.render();
+            $('.delete').on('click', {self: _self}, _self.deleteProduct);
+        });
+
+        _self.grid.onSort.subscribe(function (e, args) {
+            var cols = args.sortCols;
+            _self.dataView.sort(function (dataRow1, dataRow2) {
+                for (var i = 0, l = cols.length; i < l; i++) {
+                    var field = cols[i].sortCol.field;
+                    var sign = cols[i].sortAsc ? 1 : -1;
+                    var value1 = dataRow1[field], value2 = dataRow2[field];
+                    var result = (value1 == value2 ? 0 : (value1 > value2 ? 1 : -1)) * sign;
+                    if (result != 0) {
+                        return result;
+                    }
+                }
+                return 0;
+            });
+        });
+
     },
-    events: {
-        'click .delete': 'deleteProduct'
+    dummyLinkFormatter: function(row, cell, value, columnDef, dataContext){
+        return '<a class="'+value.toLowerCase()+'" data-id="'+dataContext.id+'" data-row="'+row+'" href="#">' + value + '</a>';
     },
-    addNew: function(){
-        this.$el.find('tbody').prepend(this.templateNew());
+    columnsSortable: function(){
+        var _self = this;
+        var columnsSortable = [
+            {id: "id", name: "Id", field: "id", width: 350, sortable: true},
+            {id: "name", name: "Name", field: "name", width: 200, sortable: true, editor: Slick.Editors.Text, formatter: _self.dummyLinkFormatter},
+            {id: "grapes", name: "Grapes", field: "grapes", width: 200, sortable: true, editor: Slick.Editors.Text},
+            {id: "country", name: "Country", field: "country", width: 200, sortable: true, editor: Slick.Editors.Text},
+            {id: "region", name: "Region", field: "region", width: 200, sortable: true, editor: Slick.Editors.Text},
+            {id: "year", name: "Year", field: "year", width: 150, sortable: true, editor: Slick.Editors.Text},
+            {id: "notes", name: "notes", field: "notes", width: 600, sortable: true, editor: Slick.Editors.LongText},
+            {id: "delete", name: "Delete", field: "delete", width: 100, sortable: false, formatter: _self.dummyLinkFormatter}
+        ];
+        return columnsSortable;
     },
-    addOne: function(model){
-        var tableViewRow = new TableViewRow({model:model});
-        this.$el.find('tbody').append(tableViewRow.render().el);
+    resetData: function(){
+        var dataFull = [];
+        _.each(this.collection.toJSON(), function(model, i){
+            dataFull[i] = {
+                id: model._id, // needed for DataView
+                name: model.name,
+                grapes: model.grapes,
+                country: model.country,
+                region: model.region,
+                year: model.year,
+                notes: model.notes,
+                delete: 'Delete'
+            };
+        });
+        return dataFull;
+    },
+    resetOnSave: function(){
+        this.dataView.setItems(this.resetData());
     },
     deleteProduct: function(e){
-        var id = $(e.target).closest('tr').find('td:first').text();
+        e.preventDefault();
+        var $ele = $(e.target);
+        var id = $ele.attr('data-id');
         var list = new List();
         list.id = id;
         list.destroy();
-        var m = this.collection.where({ _id: id})[0];
-        this.collection.remove(m);
-    }
-});
-
-var TableViewRow = Backbone.View.extend({
-    tagName: 'tr',
-    template: _.template('<td class="disabled"><%= _id %></td><td><%= name %></td><td><%= grapes %></td><td><%= country %></td><td><%= region %></td><td><%= year %></td><td><%= notes %></td><td><div class="ui tiny buttons"><div class="ui teal button">Edit</div><div class="or"></div><div class="ui negative button delete">Delete</div></td>'),
-    render: function(){
-        this.$el.html(this.template(this.model));
-        return this;
+        e.data.self.dataView.deleteItem(id);
     }
 });
 
@@ -213,5 +185,5 @@ $(function(){
     App.Views.menuView = new MenuView();
     var wrapper = $('.wrapper');
     wrapper.append(App.Views.menuView.render().el);
-    wrapper.append(App.Views.tableView.render().el);
+    wrapper.append(App.Views.tableView.render());
 });

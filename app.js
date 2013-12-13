@@ -30,27 +30,6 @@ var Product = new Schema({
 });
 var Product = mongoose.model('Product', Product);
 
-/*var product = new Product({
- name : 'Product Ten',
- grapes : 'Grenache / Syrah',
- country : 'France',
- region : 'Sothern Rhone',
- year : '2009',
- notes : 'Products detials will goes here ....................'
-});
-
- product.save(function(err,data){
-     if(err){
-        console.log("Its error")
-     }
-     else
-     {
-        console.log("data saved");
-        console.log(data);
-     }
- });*/
-
-
 // all environments
 app.set('port', process.env.PORT || 3000);
 app.set('views', __dirname + '/views');
@@ -100,6 +79,26 @@ app.post('/api/products', function (req, res) {
         next();
     });
     return res.send(product);
+});
+
+// Single update
+app.put('/api/products/:id', function (req, res) {
+    return Product.findById(req.params.id, function (err, products) {
+        products.name = req.body.name,
+        products.grapes = req.body.grapes,
+        products.country = req.body.country,
+        products.region = req.body.region,
+        products.year = req.body.year,
+        products.notes = req.body.notes
+        return products.save(function (err) {
+            if (!err) {
+                console.log("updated");
+            } else {
+                console.log(err);
+            }
+            return res.send(products);
+        });
+    });
 });
 
 // remove a single product
