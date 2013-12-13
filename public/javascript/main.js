@@ -36,7 +36,6 @@ var MenuView = Backbone.View.extend({
         $(e.target).closest('.new_product_segment').remove();
     },
     saveProduct: function(e){
-        console.log('saveProduct');
         var $newProductSegment = $(e.target).closest('.new_product_segment');
         App.Views.tableView.collection.create({
             name : $newProductSegment.find('input[name="name"]').val(),
@@ -97,7 +96,6 @@ var TableView = Backbone.View.extend({
 
         //Updated code as per comment.
         _self.grid.onCellChange.subscribe(function (e,args) {
-            console.log(args.item);
             var Product = new List({
                 id: args.item.id, // needed for DataView
                 name: args.item.name,
