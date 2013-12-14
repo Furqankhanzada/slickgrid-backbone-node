@@ -29,23 +29,56 @@ var MenuView = Backbone.View.extend({
         if(!this.$el.next('.new_product_segment').length){
             this.$el.after(this.templateNew());
             this.$el.next('.new_product_segment').find('.cancel').on('click', _self.cancel);
-            this.$el.next('.new_product_segment').find('.save').on('click', _self.saveProduct);
+            this.$el.next('.new_product_segment').find('.save').on('click', {self: _self}, _self.saveProduct);
         }
     },
     cancel: function(e){
         $(e.target).closest('.new_product_segment').remove();
     },
+    highlightField: function($element){
+        var nameValid = this.requiredFieldValidator($element.val());
+        if(!nameValid.valid){
+            $element.focus().parent().addClass('error');
+            return false;
+        }else{
+            $element.parent().removeClass('error');
+            return true;
+        }
+    },
     saveProduct: function(e){
-        var $newProductSegment = $(e.target).closest('.new_product_segment');
+
+        var $newProductSegment = $(e.target).closest('.new_product_segment'),
+            $name = $newProductSegment.find('input[name="name"]'),
+            $grapes = $newProductSegment.find('input[name="grapes"]'),
+            $country = $newProductSegment.find('input[name="country"]'),
+            $region = $newProductSegment.find('input[name="region"]'),
+            $year = $newProductSegment.find('input[name="year"]'),
+            $notes = $newProductSegment.find('textarea');
+
+        if(!e.data.self.highlightField($name)) return false;
+        if(!e.data.self.highlightField($grapes)) return false;
+        if(!e.data.self.highlightField($country)) return false;
+        if(!e.data.self.highlightField($region)) return false;
+        if(!e.data.self.highlightField($year)) return false;
+        if(!e.data.self.highlightField($notes)) return false;
+
+
         App.Views.tableView.collection.create({
-            name : $newProductSegment.find('input[name="name"]').val(),
-            grapes : $newProductSegment.find('input[name="grapes"]').val(),
-            country : $newProductSegment.find('input[name="country"]').val(),
-            region : $newProductSegment.find('input[name="region"]').val(),
-            year : $newProductSegment.find('input[name="year"]').val(),
-            notes : $newProductSegment.find('textarea').val()
+            name : $name.val(),
+            grapes : $grapes.val(),
+            country : $country.val(),
+            region : $region.val(),
+            year : $year.val(),
+            notes : $notes.val()
         },{wait: true});
         $newProductSegment.remove();
+    },
+    requiredFieldValidator: function(v) {
+        if (v == null || v == undefined || !v.length) {
+            return {valid: false, msg: "This is a required field"};
+        } else {
+            return {valid: true, msg: null};
+        }
     }
 });
 
@@ -91,13 +124,14 @@ var TableView = Backbone.View.extend({
         _self.dataView.onRowCountChanged.subscribe(function (e, args) {
             _self.grid.updateRowCount();
             _self.grid.render();
-            $('.delete').on('click', _self.deleteProduct);
         });
 
         //Updated code as per comment.
         _self.grid.onCellChange.subscribe(function (e,args) {
+
+            console.log(e,args);
             var Product = new List({
-                id: args.item.id, // needed for DataView
+                id: args.item.id,
                 name: args.item.name,
                 grapes: args.item.grapes,
                 country: args.item.country,
@@ -111,7 +145,6 @@ var TableView = Backbone.View.extend({
         _self.dataView.onRowsChanged.subscribe(function (e, args) {
             _self.grid.invalidateRows(args.rows);
             _self.grid.render();
-            $('.delete').on('click', {self: _self}, _self.deleteProduct);
         });
 
         _self.grid.onSort.subscribe(function (e, args) {
@@ -129,24 +162,31 @@ var TableView = Backbone.View.extend({
                 return 0;
             });
         });
-
     },
     dummyLinkFormatter: function(row, cell, value, columnDef, dataContext){
-        return '<a class="'+value.toLowerCase()+'" data-id="'+dataContext.id+'" data-row="'+row+'" href="#">' + value + '</a>';
+        return '<a class="'+value.toLowerCase()+'" data-id="'+dataContext.id+'" data-row="'+row+'" onclick="App.Views.tableView.deleteProduct(this, App.Views.tableView)" href="#">' + value + '</a>';
     },
     columnsSortable: function(){
         var _self = this;
         var columnsSortable = [
             {id: "id", name: "Id", field: "id", width: 350, sortable: true},
-            {id: "name", name: "Name", field: "name", width: 200, sortable: true, editor: Slick.Editors.Text, formatter: _self.dummyLinkFormatter},
-            {id: "grapes", name: "Grapes", field: "grapes", width: 200, sortable: true, editor: Slick.Editors.Text},
-            {id: "country", name: "Country", field: "country", width: 200, sortable: true, editor: Slick.Editors.Text},
-            {id: "region", name: "Region", field: "region", width: 200, sortable: true, editor: Slick.Editors.Text},
-            {id: "year", name: "Year", field: "year", width: 150, sortable: true, editor: Slick.Editors.Text},
+            {id: "name", name: "Name", field: "name", width: 200, sortable: true, editor: Slick.Editors.Text, validator: _self.requiredFieldValidator, formatter: _self.dummyLinkFormatter},
+            {id: "grapes", name: "Grapes", field: "grapes", width: 200, sortable: true, editor: Slick.Editors.Text, validator: _self.requiredFieldValidator},
+            {id: "country", name: "Country", field: "country", width: 200, sortable: true, editor: Slick.Editors.Text, validator: _self.requiredFieldValidator},
+            {id: "region", name: "Region", field: "region", width: 200, sortable: true, editor: Slick.Editors.Text, validator: _self.requiredFieldValidator},
+            {id: "year", name: "Year", field: "year", width: 150, sortable: true, editor: Slick.Editors.Text, validator: _self.requiredFieldValidator},
             {id: "notes", name: "notes", field: "notes", width: 600, sortable: true, editor: Slick.Editors.LongText},
             {id: "delete", name: "Delete", field: "delete", width: 100, sortable: false, formatter: _self.dummyLinkFormatter}
         ];
         return columnsSortable;
+    },
+    requiredFieldValidator: function(v) {
+        console.log(v);
+        if (v == null || v == undefined || !v.length) {
+            return {valid: false, msg: "This is a required field"};
+        } else {
+            return {valid: true, msg: null};
+        }
     },
     resetData: function(){
         var dataFull = [];
@@ -167,14 +207,16 @@ var TableView = Backbone.View.extend({
     resetOnSave: function(){
         this.dataView.setItems(this.resetData());
     },
-    deleteProduct: function(e){
-        e.preventDefault();
-        var $ele = $(e.target);
-        var id = $ele.attr('data-id');
-        var list = new List();
-        list.id = id;
-        list.destroy();
-        e.data.self.dataView.deleteItem(id);
+    deleteProduct: function(e, self){
+        var $ele = $(e);
+        if($ele.hasClass('delete')){
+            console.log(e)
+            var id = $ele.attr('data-id');
+            var list = new List();
+            list.id = id;
+            list.destroy();
+            self.dataView.deleteItem(id);
+        }
     }
 });
 
